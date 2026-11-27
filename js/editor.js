@@ -299,11 +299,13 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
     grid.append(number);
     bar.columns.forEach((column, c) => grid.append(cellInput(barIndex, c, ABOVE, column.above)));
 
+    // The tuning only needs showing once, at the start of the first bar: nobody retunes mid-song.
+    // Later bars keep an empty label cell so the bar number still sits in the same place.
     for (let s = 0; s < song.strings; s += 1) {
       const label = document.createElement('span');
       label.className = 'bar__label';
       label.dataset.row = s;
-      label.textContent = song.tuning[s];
+      if (barIndex === 0) label.textContent = song.tuning[s];
       label.setAttribute('aria-hidden', 'true');
       grid.append(label);
       bar.columns.forEach((column, c) => {
@@ -325,7 +327,7 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
   }
 
   function updateLabels() {
-    sheet.querySelectorAll('span.bar__label').forEach((label) => {
+    sheet.querySelectorAll('div.bar[data-bar="0"] span.bar__label').forEach((label) => {
       label.textContent = song.tuning[Number(label.dataset.row)];
     });
   }
