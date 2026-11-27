@@ -29,6 +29,21 @@
         "E"
       ],
       "hasImage": false
+    },
+    {
+      "id": "547aea95-1d9b-4cf8-9ddb-12c723952d1e",
+      "name": "Untitled song",
+      "date": "2026-11-27",
+      "strings": 6,
+      "tuning": [
+        "E",
+        "B",
+        "G",
+        "D",
+        "A",
+        "E"
+      ],
+      "hasImage": false
     }
   ]
 }
