@@ -14,6 +14,21 @@
         "D"
       ],
       "hasImage": true
+    },
+    {
+      "id": "e341efdc-5f41-4b77-b7c7-84ec5ebb69d3",
+      "name": "Untitled song",
+      "date": "2026-11-27",
+      "strings": 6,
+      "tuning": [
+        "E",
+        "B",
+        "G",
+        "D",
+        "A",
+        "E"
+      ],
+      "hasImage": false
     }
   ]
 }
