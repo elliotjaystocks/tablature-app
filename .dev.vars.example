@@ -1,5 +1,0 @@
-# Copy this file to .dev.vars for local development (it is git-ignored).
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Only honoured on localhost: lets you use the app locally without Cloudflare Access.
-DEV_USER_EMAIL=you@example.com

@@ -2,7 +2,7 @@
 //   #/            → your songs
 //   #/song/<id>   → edit a song
 
-import { api } from './api.js';
+import { api, getConfig, saveConfig, isOwner, validateGitHub } from './store.js';
 import { renderEditor } from './editor.js';
 import { prepareImage } from './image.js';
 import { newSong, tuningLabel } from './tab.js';
@@ -11,11 +11,19 @@ const view = document.getElementById('view');
 const dialog = document.querySelector('dialog.new-song');
 let currentEditor = null;
 
+// `is-owner` shows the editing controls: set when a GitHub token is connected.
+function updateOwnerClass() {
+  document.body.classList.toggle('is-owner', isOwner());
+}
+
 // ——— Routing ——————————————————————————————————————————————————
 
 async function route() {
-  currentEditor?.destroy();
+  updateOwnerClass();
+  // Finish saving the song we're leaving, so the song list shows the latest version.
+  const leaving = currentEditor;
   currentEditor = null;
+  await leaving?.destroy().catch(() => {});
 
   const match = location.hash.match(/^#\/song\/([\w-]+)/);
   try {
@@ -48,6 +56,7 @@ function formatDate(iso) {
 
 async function showLibrary() {
   document.body.className = 'library';
+  updateOwnerClass();
   document.title = 'Tablature';
 
   const songs = await api.listSongs();
@@ -87,9 +96,11 @@ async function showLibrary() {
 
 async function showSong(id) {
   document.body.className = 'editor';
+  updateOwnerClass();
   view.replaceChildren(Object.assign(document.createElement('p'), { className: 'view__loading', textContent: 'Loading…' }));
   const song = await api.getSong(id);
   currentEditor = renderEditor(view, song, {
+    readOnly: !isOwner(),
     onDeleted: () => {
       currentEditor = null;
       location.hash = '#/';
@@ -171,7 +182,7 @@ fileInput.addEventListener('change', async () => {
   }, 45000);
 
   try {
-    const song = await api.importImage(image.base64, image.mediaType);
+    const song = await api.importImage(image.base64);
     dialog.close();
     location.hash = `#/song/${song.id}`;
   } catch (error) {
@@ -180,6 +191,71 @@ fileInput.addEventListener('change', async () => {
     clearTimeout(slowTimer);
     importing = false;
   }
+});
+
+// ——— Settings dialog ——————————————————————————————————————————
+
+const settings = document.querySelector('dialog.settings');
+const settingsForm = settings.querySelector('form');
+const settingsError = settings.querySelector('p.settings__error');
+const fields = {
+  username: settings.querySelector('#cfg-username'),
+  repo: settings.querySelector('#cfg-repo'),
+  token: settings.querySelector('#cfg-token'),
+  anthropicKey: settings.querySelector('#cfg-anthropic')
+};
+
+// On GitHub Pages the address tells us the likely username and repository.
+function guessRepo() {
+  const match = location.hostname.match(/^([\w-]+)\.github\.io$/);
+  const repo = location.pathname.split('/').filter(Boolean)[0];
+  return match ? { username: match[1], repo: repo || `${match[1]}.github.io` } : {};
+}
+
+document.querySelector('[data-action="open-settings"]').addEventListener('click', () => {
+  const config = { ...guessRepo(), ...getConfig() };
+  Object.entries(fields).forEach(([key, input]) => {
+    input.value = config[key] || '';
+  });
+  settingsError.hidden = true;
+  settings.showModal();
+});
+
+settingsForm.addEventListener('submit', async (event) => {
+  if (event.submitter?.value !== 'save') return;
+  event.preventDefault();
+
+  const config = Object.fromEntries(Object.entries(fields).map(([key, input]) => [key, input.value.trim()]));
+  const saveButton = event.submitter;
+
+  if (config.username || config.repo || config.token) {
+    if (!config.username || !config.repo || !config.token) {
+      settingsError.textContent = 'Please fill in your GitHub username, repository and token.';
+      settingsError.hidden = false;
+      return;
+    }
+    saveButton.disabled = true;
+    try {
+      await validateGitHub(config.username, config.repo, config.token);
+    } catch (error) {
+      settingsError.textContent = error.message;
+      settingsError.hidden = false;
+      return;
+    } finally {
+      saveButton.disabled = false;
+    }
+  }
+
+  saveConfig(config);
+  settings.close();
+  route();
+});
+
+settings.querySelector('[data-action="disconnect"]').addEventListener('click', () => {
+  if (!confirm('Remove your GitHub token and Anthropic key from this browser?')) return;
+  saveConfig({});
+  settings.close();
+  route();
 });
 
 // ——— Start ————————————————————————————————————————————————————

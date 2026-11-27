@@ -1,6 +1,8 @@
 # Tablature
 
-A small web app for writing guitar tab. Start a song from scratch, or upload a photo of handwritten tab and have Claude convert it into tab you can edit. Songs sync across your devices and export as PDF or `.txt`.
+A small web app for writing guitar tab. Start a song from scratch, or upload a photo of handwritten tab and have Claude convert it into tab you can edit. Songs export as PDF or `.txt`.
+
+There’s no server and nothing to install. The app is hosted free on GitHub Pages, and your songs are saved as files in this repository through the GitHub API, so every save is a commit and each song has a full history.
 
 ## What it does
 
@@ -11,101 +13,68 @@ A small web app for writing guitar tab. Start a song from scratch, or upload a p
 - **Photo import** sends the image to Claude (`claude-opus-5-5`), which returns structured tab. The photo is kept with the song so you can compare it while correcting, and anything Claude wasn’t sure about is added to the song’s notes.
 - **Export** to `.txt` (classic monospaced tab, wrapped at 80 characters) or PDF (A4, rows of bars never split across pages).
 
-## How it’s built
+## Where things are stored
 
-| Part | Choice |
-| --- | --- |
-| Front end | Plain HTML, CSS and JavaScript modules in `public/`, with no framework and no build step |
-| API | Cloudflare Pages Functions in `functions/api/` |
-| Database | Cloudflare D1 (SQLite). Each song is one row, and the tab itself is stored as JSON. |
-| Photo storage | Cloudflare R2 |
-| Sign-in | Cloudflare Access (one-time code by email), verified on every API request |
-| Handwriting | Anthropic API, via the official `@anthropic-ai/sdk` |
+```
+songs/index.json         the song list
+songs/<id>.json          one file per song, including its tab
+songs/images/<id>.jpg    photos that songs were imported from
+```
 
-There are two third-party dependencies, plus web fonts:
+The `songs/` folder is created the first time you save a song.
 
-- **jsPDF** is loaded from cdnjs only when you export a PDF, because browsers can’t create a PDF file directly.
-- **The Anthropic SDK** runs on the server.
-- **Fonts:** Bricolage Grotesque and Recursive, currently loaded from Google Fonts. You may want to self-host them.
+Anyone who visits the site can read and export your songs. Editing only appears once a GitHub token is connected in **Settings**, and the token and your Anthropic API key are stored only in your browser.
 
 ## Setting it up
 
-You’ll need [Node.js](https://nodejs.org/) (version 20 or later), a free Cloudflare account and an Anthropic API key.
+### 1. Put the app on GitHub
 
-1. Install the dependencies:
+1. Create a new repository on GitHub (for example `tablature`). Leave it **Public**, which free GitHub Pages needs.
+2. Push this folder to it. With GitHub Desktop, that’s **File → Add Local Repository**, then **Publish repository**.
 
-   ```bash
-   npm install
-   ```
+### 2. Turn on GitHub Pages
 
-2. Log in to Cloudflare:
+1. On GitHub, go to the repository’s **Settings → Pages**.
+2. Under **Source**, choose **Deploy from a branch**, then `main` and `/ (root)`, and **Save**.
+3. After a minute or two you’ll have a URL like `https://your-username.github.io/tablature/`.
 
-   ```bash
-   npx wrangler login
-   ```
+### 3. Create a GitHub token
 
-3. Create the database, then paste the `database_id` it prints into `wrangler.toml`:
+1. Go to [GitHub → Settings → Developer settings → Fine-grained tokens](https://github.com/settings/personal-access-tokens/new).
+2. Name it `Tablature` and set an expiry (a year is convenient).
+3. Under **Repository access**, choose **Only select repositories** and pick this repo.
+4. Under **Permissions → Repository permissions**, set **Contents** to **Read and write**.
+5. Generate the token and copy it straight away, because GitHub won’t show it again.
 
-   ```bash
-   npx wrangler d1 create tablature
-   ```
+### 4. Get an Anthropic API key (for photo import)
 
-4. Create the bucket for photos:
+1. Create a key at [console.anthropic.com](https://console.anthropic.com/settings/keys).
+2. Set a **monthly spend limit** for it under **Settings → Limits**. The key lives in your browser, so a limit is a sensible safety net.
 
-   ```bash
-   npx wrangler r2 bucket create tablature-images
-   ```
+### 5. Connect the app
 
-5. Create the database table:
+Open your GitHub Pages URL, click **Settings**, and enter your username, repository name, token and API key. The username and repository are filled in for you from the address.
 
-   ```bash
-   npm run db:migrate
-   ```
-
-6. Deploy. The first deploy creates the Pages project:
-
-   ```bash
-   npm run deploy
-   ```
-
-7. Add your Anthropic API key as a secret, then deploy once more so it takes effect:
-
-   ```bash
-   npx wrangler pages secret put ANTHROPIC_API_KEY
-   ```
-
-8. **Turn on sign-in** with Cloudflare Access:
-   - In the Cloudflare dashboard, go to **Zero Trust → Access → Applications → Add an application → Self-hosted**.
-   - Add your app’s domain (for example `tablature.pages.dev`) and also `*.tablature.pages.dev`, so preview deployments are covered too.
-   - Add a policy that allows your own email address. The default login method, a one-time PIN sent by email, works well.
-   - Copy the application’s **Audience (AUD) tag** into `ACCESS_AUD` in `wrangler.toml`, and your team domain (`<team>.cloudflareaccess.com`) into `ACCESS_TEAM_DOMAIN`. Then deploy again.
-
-   Until both values are set, the API refuses every request, so the app is never accidentally left open.
+On another device, just open the same URL and enter the same details.
 
 ## Running it locally
 
-```bash
-cp .dev.vars.example .dev.vars
-```
-
-Put your API key and email address in `.dev.vars`, then run:
+There’s no build step: serve the folder with any static server, for example:
 
 ```bash
-npm run db:migrate:local
+python3 -m http.server 8000
 ```
 
-```bash
-npm run dev
-```
-
-Open http://localhost:8788. On `localhost` only, `DEV_USER_EMAIL` stands in for Cloudflare Access.
+Then open http://localhost:8000. Once connected in Settings, it reads and writes the same GitHub repository as the live site.
 
 ## Costs
 
-At personal scale, Cloudflare Pages, D1, R2 and Access (up to 50 users) all fit within their free tiers. Each photo import is a single Claude request: typically about a cent or two for a page of tab, depending on its length.
+GitHub Pages and the GitHub API are free. Each photo import is a single Claude request, typically about a cent or two for a page of tab, depending on its length.
 
 ## Things worth knowing
 
-- Saving is automatic, shortly after each change. If the same song is open on two devices, the most recent save wins.
-- iPhone photos in HEIC format only open in browsers that support it (Safari does). Elsewhere, export the photo as JPEG first.
+- Saving happens automatically a couple of seconds after you stop typing. If you try to close the tab before a save finishes, the browser asks you to wait.
+- If the same song is open on two devices, the most recent save wins. Earlier versions are always in the repository’s commit history.
+- Visitors see changes once GitHub Pages republishes, usually within a minute or two.
+- iPhone photos in HEIC format only open in browsers that support them (Safari does). Elsewhere, export the photo as JPEG first.
 - The tab is free text in each cell, so you can write things the toolbar doesn’t cover. They’ll just be underlined in orange.

@@ -66,6 +66,32 @@ export function newSong() {
   };
 }
 
+// Make sure a song's tab is well-formed: used on songs from an image import, and on
+// anything loaded from GitHub (where a file could have been edited by hand).
+export function sanitiseTab(input = {}) {
+  const strings = Number(input.strings) === 7 ? 7 : 6;
+  const clean = (value, max) => (typeof value === 'string' ? value.slice(0, max) : '');
+
+  const tuning = Array.from({ length: strings }, (_, i) => {
+    const note = Array.isArray(input.tuning) ? clean(input.tuning[i], 4).trim() : '';
+    return note || TUNING_PRESETS[strings][0].notes[i];
+  });
+
+  const bars = (Array.isArray(input.bars) ? input.bars : []).map((bar) => {
+    const columns = (Array.isArray(bar?.columns) ? bar.columns.slice(0, 64) : []).map((column) => ({
+      above: clean(column?.above, 32),
+      notes: Array.from({ length: strings }, (_, i) =>
+        Array.isArray(column?.notes) ? clean(column.notes[i], 16).replace(/\s+/g, '') : ''
+      )
+    }));
+    if (!columns.length) columns.push(blankColumn(strings));
+    return { columns };
+  });
+  if (!bars.length) bars.push(blankBar(strings));
+
+  return { strings, tuning, bars };
+}
+
 export function presetFor(strings, tuning) {
   return TUNING_PRESETS[strings].find((preset) => preset.notes.join() === tuning.join()) || null;
 }

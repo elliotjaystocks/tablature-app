@@ -1,6 +1,6 @@
 // The song editor: song details, tuning, and the tab grid itself.
 
-import { api } from './api.js';
+import { api } from './store.js';
 import { exportText, exportPdf } from './export.js';
 import {
   TUNING_PRESETS,
@@ -12,14 +12,15 @@ import {
   lowestStringHasNotes
 } from './tab.js';
 
-const SAVE_DELAY = 800;
+// Each save is a commit to GitHub, so wait for a pause in typing before saving.
+const SAVE_DELAY = 2500;
 const RETRY_DELAY = 5000;
 const ABOVE = -1; // row index for the annotation row above the staff
 
 // A loose check for tokens we recognise, so typos (or misreads from an import) stand out.
 const NOTE_PATTERN = /^(?:t?\d{1,2}|x|<\d{1,2}>)(?:[hp/\\]\d{1,2}|b\d{1,2}(?:r\d{1,2})?|~)*~?$/;
 
-export function renderEditor(root, song, { onDeleted }) {
+export function renderEditor(root, song, { onDeleted, readOnly = false }) {
   const template = document.getElementById('editor-template');
   root.replaceChildren(template.content.cloneNode(true));
 
@@ -42,6 +43,7 @@ export function renderEditor(root, song, { onDeleted }) {
   }
 
   function changed() {
+    if (readOnly) return;
     dirty = true;
     setStatus('Unsaved changes', 'pending');
     clearTimeout(saveTimer);
@@ -58,8 +60,7 @@ export function renderEditor(root, song, { onDeleted }) {
     dirty = false;
     setStatus('Saving…', 'pending');
     try {
-      const { updatedAt } = await api.saveSong(song);
-      song.updatedAt = updatedAt;
+      await api.saveSong(song);
       if (!dirty) setStatus('Saved', 'saved');
     } catch (error) {
       dirty = true;
@@ -70,17 +71,21 @@ export function renderEditor(root, song, { onDeleted }) {
     }
   }
 
-  // Called when leaving the editor or closing the tab, so the last keystrokes aren't lost.
-  function flush() {
+  // Called when leaving the editor, so the last keystrokes aren't lost.
+  async function flush() {
     clearTimeout(saveTimer);
-    if (dirty) {
-      dirty = false;
-      api.saveSong(song, { keepalive: true }).catch(() => {});
-    }
+    while (saving) await new Promise((resolve) => setTimeout(resolve, 100));
+    if (dirty) await save();
   }
 
-  window.addEventListener('pagehide', flush);
-  setStatus('Saved', 'saved');
+  // A save is several requests to GitHub, which can't finish once the tab has closed,
+  // so ask before closing with changes still unsaved.
+  function warnIfUnsaved(event) {
+    if (dirty || saving) event.preventDefault();
+  }
+
+  window.addEventListener('beforeunload', warnIfUnsaved);
+  setStatus(readOnly ? '' : 'Saved', readOnly ? '' : 'saved');
 
   // ——— Song details ————————————————————————————————————————————
 
@@ -190,8 +195,12 @@ export function renderEditor(root, song, { onDeleted }) {
     source.hidden = false;
     source.addEventListener(
       'toggle',
-      () => {
-        source.querySelector('img').src = api.imageUrl(song.id);
+      async () => {
+        try {
+          source.querySelector('img').src = await api.imageUrl(song.id);
+        } catch (error) {
+          source.querySelector('img').alt = `Couldn’t load the photo: ${error.message}`;
+        }
       },
       { once: true }
     );
@@ -366,7 +375,7 @@ export function renderEditor(root, song, { onDeleted }) {
         break;
       case 'Enter':
         target = step(focus, 1);
-        if (!target) {
+        if (!target && !readOnly) {
           // Enter at the very end of the song starts a new bar.
           song.bars.push(blankBar(song.strings));
           renderSheet();
@@ -510,7 +519,7 @@ export function renderEditor(root, song, { onDeleted }) {
       clearTimeout(saveTimer);
       dirty = false;
       try {
-        await api.deleteSong(song.id);
+        await api.deleteSong(song);
         onDeleted();
       } catch (error) {
         alert(`Couldn’t delete the song: ${error.message}`);
@@ -535,10 +544,20 @@ export function renderEditor(root, song, { onDeleted }) {
   renderTuning();
   renderSheet();
 
+  // Visitors (no GitHub token) can read and export, but not edit.
+  if (readOnly) {
+    root.querySelectorAll('article.song input, article.song textarea').forEach((el) => {
+      el.readOnly = true;
+    });
+    root.querySelectorAll('article.song select').forEach((el) => {
+      el.disabled = true;
+    });
+  }
+
   return {
     destroy() {
-      flush();
-      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', warnIfUnsaved);
+      return flush();
     }
   };
 }

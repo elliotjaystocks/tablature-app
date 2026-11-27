@@ -23,15 +23,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="css/styles.css">
 
-  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="js/app.js"></script>
 </head>
 
 <body class="library">
 
   <header class="site-header">
     <a class="site-header__logo" href="#/">Tablature</a>
+    <button class="button button--small" type="button" data-action="open-settings">Settings</button>
   </header>
 
   <main id="view" class="view" tabindex="-1">
@@ -44,13 +45,14 @@
     <section class="library">
       <header class="library__header">
         <h1 class="library__title">Your songs</h1>
-        <button class="button button--primary" type="button" data-action="new-song">New song</button>
+        <button class="button button--primary owner-only" type="button" data-action="new-song">New song</button>
       </header>
 
       <ol class="song-list"></ol>
 
       <div class="library__empty" hidden>
-        <p>No songs yet. Start one from scratch, or import a photo of some handwritten&nbsp;tab.</p>
+        <p class="owner-only">No songs yet. Start one from scratch, or import a photo of some handwritten&nbsp;tab.</p>
+        <p class="visitor-only">No songs here yet. If this is your app, connect your GitHub repository in Settings to start&nbsp;writing.</p>
       </div>
     </section>
   </template>
@@ -130,7 +132,7 @@
         </details>
       </header>
 
-      <div class="toolbar" role="toolbar" aria-label="Tab editing tools">
+      <div class="toolbar owner-only" role="toolbar" aria-label="Tab editing tools">
         <div class="toolbar__group" aria-label="Techniques"></div>
 
         <div class="toolbar__group" aria-label="Columns">
@@ -148,7 +150,7 @@
 
       <section class="tab-sheet" aria-label="Tab"></section>
 
-      <footer class="song__footer">
+      <footer class="song__footer owner-only">
         <button class="button button--add-bar" type="button" data-action="append-bar">+ Add a bar at the end</button>
         <button class="button button--danger" type="button" data-action="delete-song">Delete song</button>
       </footer>
@@ -191,6 +193,76 @@
       </div>
     </form>
   </dialog> <!-- end .new-song -->
+
+
+  <!-- ——— Settings dialog ——— -->
+  <dialog class="settings" aria-labelledby="settings-title">
+    <form class="settings__inner" method="dialog">
+      <h2 class="settings__title" id="settings-title">Settings</h2>
+
+      <p class="settings__intro">Your songs are saved as files in a GitHub repository, so you&#8217;ll need a personal access token that lets this app write to it. Everything here is stored in this browser&nbsp;only.</p>
+
+      <details class="settings__help">
+        <summary>How to create a token</summary>
+        <ol>
+          <li>Go to <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub &#8594; Settings &#8594; Developer settings &#8594; Fine-grained&nbsp;tokens</a>.</li>
+          <li>Under <em>Repository access</em>, choose <em>Only select repositories</em> and pick this app&#8217;s&nbsp;repo.</li>
+          <li>Under <em>Permissions</em>, set <strong>Contents</strong> to <strong>Read and&nbsp;write</strong>.</li>
+          <li>Generate the token and paste it&nbsp;below.</li>
+        </ol>
+      </details>
+
+      <div class="field">
+        <label class="field__label" for="cfg-username">GitHub username</label>
+        <input
+          class="field__input"
+          id="cfg-username"
+          type="text"
+          autocomplete="username"
+          autocapitalize="off"
+          spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="cfg-repo">Repository</label>
+        <input
+          class="field__input"
+          id="cfg-repo"
+          type="text"
+          autocapitalize="off"
+          spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="cfg-token">GitHub token</label>
+        <input
+          class="field__input"
+          id="cfg-token"
+          type="password"
+          autocomplete="off"
+          spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="cfg-anthropic">Anthropic API key <span class="field__optional">(for photo import)</span></label>
+        <input
+          class="field__input"
+          id="cfg-anthropic"
+          type="password"
+          autocomplete="off"
+          spellcheck="false">
+        <p class="field__note">Create one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>, and set a monthly spend limit&nbsp;there.</p>
+      </div>
+
+      <p class="settings__error" role="alert" hidden></p>
+
+      <div class="settings__actions">
+        <button class="button button--danger" type="button" data-action="disconnect">Disconnect</button>
+        <button class="button" value="cancel" formnovalidate>Cancel</button>
+        <button class="button button--primary" type="submit" value="save">Save</button>
+      </div>
+    </form>
+  </dialog> <!-- end .settings -->
 
 </body>
 </html>
