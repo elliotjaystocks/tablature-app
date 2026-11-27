@@ -1,0 +1,19 @@
+{
+  "name": "tablature",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Write, import and export guitar tablature.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev",
+    "db:migrate:local": "wrangler d1 migrations apply tablature --local",
+    "db:migrate": "wrangler d1 migrations apply tablature --remote",
+    "deploy": "wrangler pages deploy"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.136.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

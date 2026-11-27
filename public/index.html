@@ -1,0 +1,196 @@
+<!DOCTYPE HTML>
+<html lang="en-GB">
+<head>
+
+  <!--
+    Hello, view-source reader! This is a small, hand-built app for writing guitar tab:
+    plain HTML, CSS and JavaScript, with no framework. Have a poke around.
+  -->
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tablature</title>
+  <meta name="description" content="Write, import and export guitar tablature.">
+  <meta name="theme-color" content="#222222">
+
+  <!-- A private app: keep it out of search engines and AI training sets. -->
+  <meta name="robots" content="noindex, nofollow, noai, noimageai">
+  <meta name="CCBot" content="nofollow">
+  <meta name="tdm-reservation" content="1">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23222'/%3E%3Cg stroke='%23F6F6F6' stroke-width='1.5'%3E%3Cpath d='M6 9h20M6 13h20M6 17h20M6 21h20'/%3E%3C/g%3E%3Ccircle cx='13' cy='15' r='3.5' fill='%23FF2457'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Recursive:slnt,wght,CASL,CRSV,MONO@-15..0,300..1000,0..1,0..1,0..1&display=swap">
+  <link rel="stylesheet" href="/css/styles.css">
+
+  <script type="module" src="/js/app.js"></script>
+</head>
+
+<body class="library">
+
+  <header class="site-header">
+    <a class="site-header__logo" href="#/">Tablature</a>
+  </header>
+
+  <main id="view" class="view" tabindex="-1">
+    <p class="view__loading">Loading&#8230;</p>
+  </main>
+
+
+  <!-- ——— Library view ——— -->
+  <template id="library-template">
+    <section class="library">
+      <header class="library__header">
+        <h1 class="library__title">Your songs</h1>
+        <button class="button button--primary" type="button" data-action="new-song">New song</button>
+      </header>
+
+      <ol class="song-list"></ol>
+
+      <div class="library__empty" hidden>
+        <p>No songs yet. Start one from scratch, or import a photo of some handwritten&nbsp;tab.</p>
+      </div>
+    </section>
+  </template>
+
+
+  <!-- ——— Editor view ——— -->
+  <template id="editor-template">
+    <article class="song">
+
+      <nav class="song__nav">
+        <a class="song__back" href="#/">&#8592; All songs</a>
+        <span class="save-status" aria-live="polite"></span>
+        <div class="song__exports">
+          <button class="button" type="button" data-action="export-txt">Export .txt</button>
+          <button class="button" type="button" data-action="export-pdf">Export PDF</button>
+        </div>
+      </nav>
+
+      <header class="song__header">
+        <label class="visually-hidden" for="song-name">Song name</label>
+        <input
+          class="song__name"
+          id="song-name"
+          name="name"
+          type="text"
+          autocomplete="off"
+          placeholder="Song name">
+
+        <div class="song__settings">
+          <div class="field">
+            <label class="field__label" for="song-date">Date</label>
+            <input
+              class="field__input"
+              id="song-date"
+              name="date"
+              type="date">
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="song-strings">Strings</label>
+            <select
+              class="field__input"
+              id="song-strings"
+              name="strings">
+              <option value="6">6-string</option>
+              <option value="7">7-string</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="song-tuning">Tuning</label>
+            <select
+              class="field__input"
+              id="song-tuning"
+              name="tuning"></select>
+          </div>
+
+          <fieldset class="field tuning">
+            <legend class="field__label">Each string, low to high</legend>
+            <div class="tuning__strings"></div>
+          </fieldset>
+        </div>
+
+        <div class="field field--notes">
+          <label class="field__label" for="song-notes">Notes</label>
+          <textarea
+            class="field__input"
+            id="song-notes"
+            name="notes"
+            rows="3"
+            placeholder="Capo, tempo, who you nicked the riff from&#8230;"></textarea>
+        </div>
+
+        <details class="song__source" hidden>
+          <summary>Original photo</summary>
+          <img class="song__source-image" alt="The handwritten tab this song was imported from" loading="lazy">
+        </details>
+      </header>
+
+      <div class="toolbar" role="toolbar" aria-label="Tab editing tools">
+        <div class="toolbar__group" aria-label="Techniques"></div>
+
+        <div class="toolbar__group" aria-label="Columns">
+          <button class="button button--small" type="button" data-action="insert-column" title="Insert a column after the selected one">+ Column</button>
+          <button class="button button--small" type="button" data-action="delete-column" title="Delete the selected column">&minus; Column</button>
+        </div>
+
+        <div class="toolbar__group" aria-label="Bars">
+          <button class="button button--small" type="button" data-action="add-bar" title="Add a bar after the selected one">+ Bar</button>
+          <button class="button button--small" type="button" data-action="remove-bar" title="Remove the selected bar">&minus; Bar</button>
+        </div>
+
+        <p class="toolbar__hint">Arrow keys move between notes. Enter moves to the next&nbsp;column.</p>
+      </div>
+
+      <section class="tab-sheet" aria-label="Tab"></section>
+
+      <footer class="song__footer">
+        <button class="button button--add-bar" type="button" data-action="append-bar">+ Add a bar at the end</button>
+        <button class="button button--danger" type="button" data-action="delete-song">Delete song</button>
+      </footer>
+
+    </article> <!-- end .song -->
+  </template>
+
+
+  <!-- ——— New song dialog ——— -->
+  <dialog class="new-song" aria-labelledby="new-song-title">
+    <form class="new-song__inner" method="dialog">
+      <h2 class="new-song__title" id="new-song-title">New song</h2>
+
+      <div class="new-song__choices">
+        <button class="choice" type="button" data-action="blank-song">
+          <strong class="choice__title">Start from scratch</strong>
+          <span class="choice__text">An empty tab in standard tuning. You can change the strings and tuning&nbsp;later.</span>
+        </button>
+
+        <label class="choice" for="tab-photo">
+          <strong class="choice__title">Import a photo</strong>
+          <span class="choice__text">Upload a photo or scan of handwritten tab and Claude will turn it into tab you can&nbsp;edit.</span>
+        </label>
+        <input
+          class="visually-hidden"
+          id="tab-photo"
+          type="file"
+          accept="image/*">
+      </div>
+
+      <div class="new-song__progress" hidden>
+        <img class="new-song__preview" alt="The photo being converted">
+        <p class="new-song__status" aria-live="polite">Reading your tab&#8230; this usually takes under a&nbsp;minute.</p>
+      </div>
+
+      <p class="new-song__error" role="alert" hidden></p>
+
+      <div class="new-song__actions">
+        <button class="button" value="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog> <!-- end .new-song -->
+
+</body>
+</html>
