@@ -5,7 +5,7 @@
 import { api, getConfig, saveConfig, isOwner, validateGitHub } from './store.js';
 import { renderEditor } from './editor.js';
 import { prepareImage } from './image.js';
-import { newSong, tuningLabel } from './tab.js';
+import { newSong, songSummary } from './tab.js';
 
 const view = document.getElementById('view');
 const dialog = document.querySelector('dialog.new-song');
@@ -47,12 +47,6 @@ function showError(message) {
 
 // ——— Library ——————————————————————————————————————————————————
 
-const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
-function formatDate(iso) {
-  const [year, month, day] = iso.split('-').map(Number);
-  return dateFormat.format(new Date(year, month - 1, day));
-}
 
 async function showLibrary() {
   document.body.className = 'library';
@@ -81,7 +75,7 @@ async function showLibrary() {
 
       const meta = document.createElement('span');
       meta.className = 'song-list__meta';
-      meta.textContent = [formatDate(song.date), `${song.strings}-string`, tuningLabel(song)].join(' · ');
+      meta.textContent = songSummary(song);
 
       link.append(name, meta);
       item.append(link);

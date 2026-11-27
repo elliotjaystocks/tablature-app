@@ -81,55 +81,66 @@
           autocomplete="off"
           placeholder="Song name">
 
-        <div class="song__settings">
-          <div class="field">
-            <label class="field__label" for="song-date">Date</label>
-            <input
-              class="field__input"
-              id="song-date"
-              name="date"
-              type="date">
-          </div>
+        <p class="song__summary"></p>
+        <p class="song__notes-preview" hidden></p>
 
-          <div class="field">
-            <label class="field__label" for="song-strings">Strings</label>
-            <select
-              class="field__input"
-              id="song-strings"
-              name="strings">
-              <option value="6">6-string</option>
-              <option value="7">7-string</option>
-            </select>
-          </div>
+        <div class="song__disclosures">
+          <details class="song__details">
+            <summary>Song details</summary>
 
-          <div class="field">
-            <label class="field__label" for="song-tuning">Tuning</label>
-            <select
-              class="field__input"
-              id="song-tuning"
-              name="tuning"></select>
-          </div>
+            <div class="song__details-inner">
+              <div class="song__settings">
+                <div class="field">
+                  <label class="field__label" for="song-date">Date</label>
+                  <input
+                    class="field__input"
+                    id="song-date"
+                    name="date"
+                    type="date">
+                </div>
 
-          <fieldset class="field tuning">
-            <legend class="field__label">Each string, low to high</legend>
-            <div class="tuning__strings"></div>
-          </fieldset>
+                <div class="field">
+                  <label class="field__label" for="song-strings">Strings</label>
+                  <select
+                    class="field__input"
+                    id="song-strings"
+                    name="strings">
+                    <option value="6">6-string</option>
+                    <option value="7">7-string</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="field__label" for="song-tuning">Tuning</label>
+                  <select
+                    class="field__input"
+                    id="song-tuning"
+                    name="tuning"></select>
+                </div>
+
+                <fieldset class="field tuning">
+                  <legend class="field__label">Each string, low to high</legend>
+                  <div class="tuning__strings"></div>
+                </fieldset>
+              </div>
+
+              <div class="field field--notes">
+                <label class="field__label" for="song-notes">Notes</label>
+                <textarea
+                  class="field__input"
+                  id="song-notes"
+                  name="notes"
+                  rows="3"
+                  placeholder="Capo, tempo, who you nicked the riff from&#8230;"></textarea>
+              </div>
+            </div>
+          </details> <!-- end .song__details -->
+
+          <details class="song__source" hidden>
+            <summary>Original photo</summary>
+            <img class="song__source-image" alt="The handwritten tab this song was imported from" loading="lazy">
+          </details>
         </div>
-
-        <div class="field field--notes">
-          <label class="field__label" for="song-notes">Notes</label>
-          <textarea
-            class="field__input"
-            id="song-notes"
-            name="notes"
-            rows="3"
-            placeholder="Capo, tempo, who you nicked the riff from&#8230;"></textarea>
-        </div>
-
-        <details class="song__source" hidden>
-          <summary>Original photo</summary>
-          <img class="song__source-image" alt="The handwritten tab this song was imported from" loading="lazy">
-        </details>
       </header>
 
       <div class="toolbar owner-only" role="toolbar" aria-label="Tab editing tools">

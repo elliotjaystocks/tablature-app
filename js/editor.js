@@ -9,7 +9,8 @@ import {
   blankColumn,
   presetFor,
   setStringCount,
-  lowestStringHasNotes
+  lowestStringHasNotes,
+  songSummary
 } from './tab.js';
 
 // Each save is a commit to GitHub, so wait for a pause in typing before saving.
@@ -44,6 +45,7 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
 
   function changed() {
     if (readOnly) return;
+    updateSummary();
     dirty = true;
     setStatus('Unsaved changes', 'pending');
     clearTimeout(saveTimer);
@@ -94,6 +96,17 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
   const stringsSelect = $('#song-strings');
   const tuningSelect = $('#song-tuning');
   const notesInput = $('#song-notes');
+
+  const summaryEl = $('p.song__summary');
+  const notesPreview = $('p.song__notes-preview');
+
+  // The line under the song name, so the details panel can stay closed most of the time.
+  function updateSummary() {
+    summaryEl.textContent = songSummary(song);
+    const notes = song.notes.trim();
+    notesPreview.textContent = notes;
+    notesPreview.hidden = !notes;
+  }
 
   nameInput.value = song.name;
   dateInput.value = song.date;
@@ -543,6 +556,7 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
   document.title = `${song.name} – Tablature`;
   renderTuning();
   renderSheet();
+  updateSummary();
 
   // Visitors (no GitHub token) can read and export, but not edit.
   if (readOnly) {

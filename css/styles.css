@@ -426,8 +426,8 @@ div.song__exports {
 
 header.song__header {
   display: grid;
-  gap: var(--spacing-m);
-  padding-bottom: var(--spacing-l);
+  gap: var(--spacing-2xs);
+  padding-bottom: var(--spacing-m);
 }
 
 input.song__name {
@@ -437,7 +437,7 @@ input.song__name {
   border: 0;
   border-bottom: var(--border-size-m) solid transparent;
   background: transparent;
-  font-size: var(--type-scale-step-5);
+  font-size: var(--type-scale-step-4);
   line-height: 1.1;
 }
 
@@ -448,6 +448,53 @@ input.song__name:hover {
 input.song__name:focus {
   outline: none;
   border-bottom-color: var(--color-action);
+}
+
+p.song__summary {
+  color: var(--color-knocked-back);
+  font-size: var(--type-scale-step--1);
+}
+
+/* Notes stay visible (but brief) while the details panel is closed */
+p.song__notes-preview {
+  display: -webkit-box;
+  max-width: var(--measure);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: var(--type-scale-step--1);
+  line-height: 1.3;
+  white-space: pre-line;
+}
+
+/* No need for the preview while the full notes are showing */
+header.song__header:has(details.song__details[open]) p.song__notes-preview {
+  display: none;
+}
+
+div.song__disclosures {
+  display: grid;
+  gap: var(--spacing-2xs);
+  margin-top: var(--spacing-2xs);
+}
+
+details.song__details summary,
+details.song__source summary {
+  --vf-wght: 600;
+  width: fit-content;
+  cursor: pointer;
+  font-size: var(--type-scale-step--1);
+}
+
+div.song__details-inner {
+  display: grid;
+  gap: var(--spacing-s);
+  margin-top: var(--spacing-xs);
+  padding: var(--spacing-s);
+  border-radius: var(--border-radius-l);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
 }
 
 div.song__settings {
@@ -519,13 +566,6 @@ input.tuning__string {
   padding-inline: 0.4em;
 }
 
-details.song__source summary {
-  --vf-wght: 600;
-  width: fit-content;
-  cursor: pointer;
-  font-size: var(--type-scale-step--1);
-}
-
 img.song__source-image {
   max-height: 80vh;
   margin-top: var(--spacing-xs);
@@ -573,10 +613,13 @@ p.toolbar__hint {
 /* ——— Editor: the tab ——————————————————————————————————————————————————— */
 
 section.tab-sheet {
-  --cell-height: 1.55rem;
+  /* Room around each note: the height of a string's row, and the space either side of a note */
+  --cell-height: 2.1rem;
+  --cell-padding: 0.75ch;
+  --cell-min: 2.5ch;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-m) var(--spacing-2xs);
+  gap: var(--spacing-l) var(--spacing-s);
   font-family: var(--font-mono);
   --vf-mono: 1;
 }
@@ -608,10 +651,10 @@ div.bar.is-current span.bar__number {
 input.bar__cell,
 input.bar__above {
   field-sizing: content;
-  min-width: 2.4ch;
-  width: 2.4ch; /* fallback for browsers without field-sizing */
+  min-width: var(--cell-min);
+  width: var(--cell-min); /* fallback for browsers without field-sizing */
   height: var(--cell-height);
-  padding: 0 0.3ch;
+  padding: 0 var(--cell-padding);
   border: 0;
   border-radius: 0;
   font-family: var(--font-mono);
@@ -638,8 +681,8 @@ input.bar__cell {
 
 input.bar__cell.has-value {
   background:
-    linear-gradient(var(--color-line), var(--color-line)) left center / 0.3ch var(--border-size-s) no-repeat,
-    linear-gradient(var(--color-line), var(--color-line)) right center / 0.3ch var(--border-size-s) no-repeat,
+    linear-gradient(var(--color-line), var(--color-line)) left center / var(--cell-padding) var(--border-size-s) no-repeat,
+    linear-gradient(var(--color-line), var(--color-line)) right center / var(--cell-padding) var(--border-size-s) no-repeat,
     transparent;
 }
 
@@ -659,7 +702,6 @@ input.bar__cell.is-unusual {
 
 input.bar__above {
   --vf-casl: 1;
-  min-width: 2.4ch;
   background: transparent;
   color: var(--color-knocked-back);
   font-size: var(--type-scale-step--2);

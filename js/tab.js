@@ -124,6 +124,18 @@ export function tuningLabel(song) {
   return preset ? `${preset.name} (${lowToHigh})` : lowToHigh;
 }
 
+const dateFormat = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+export function formatDate(iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  return dateFormat.format(new Date(year, month - 1, day));
+}
+
+// One line describing a song, e.g. "27 Nov 2026 · 6-string · Standard (E A D G B E)"
+export function songSummary(song) {
+  return [formatDate(song.date), `${song.strings}-string`, tuningLabel(song)].join(' · ');
+}
+
 // ——— Plain-text rendering ————————————————————————————————————————————————
 
 function renderBar(bar, strings) {
