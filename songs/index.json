@@ -1,0 +1,49 @@
+{
+  "songs": [
+    {
+      "id": "653fe9c7-946d-497d-aa68-ae176276bf2e",
+      "name": "Imported song",
+      "date": "2026-11-27",
+      "strings": 6,
+      "tuning": [
+        "D",
+        "A",
+        "G",
+        "D",
+        "A",
+        "D"
+      ],
+      "hasImage": true
+    },
+    {
+      "id": "e341efdc-5f41-4b77-b7c7-84ec5ebb69d3",
+      "name": "Song Three",
+      "date": "2026-11-27",
+      "strings": 6,
+      "tuning": [
+        "E",
+        "B",
+        "G",
+        "D",
+        "A",
+        "E"
+      ],
+      "hasImage": false
+    },
+    {
+      "id": "547aea95-1d9b-4cf8-9ddb-12c723952d1e",
+      "name": "Untitled song",
+      "date": "2026-11-27",
+      "strings": 6,
+      "tuning": [
+        "E",
+        "B",
+        "G",
+        "D",
+        "A",
+        "E"
+      ],
+      "hasImage": false
+    }
+  ]
+}
