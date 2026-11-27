@@ -19,6 +19,8 @@
   --color-surface: #ffffff;
   --color-line: #9aa0a4;
   --color-focus-column: #ff245714;
+  --color-chrome: #eaeaea;    /* the site header bar */
+  --color-tray: #f0f0f0;      /* toolbar and panels inside the white card */
 
   /* Fluid type scale (Utopia-style: 1.2 at 320px → 1.25 at 1240px) */
   --type-scale-step--2: clamp(0.6944rem, 0.6855rem + 0.0446vw, 0.72rem);
@@ -44,7 +46,7 @@
   --spacing-range-l-xl: clamp(2rem, 1.6522rem + 1.7391vw, 3rem);
 
   /* Type */
-  --font-sans: "Bricolage Grotesque", Verdana, sans-serif;
+  --font-sans: "Inter", Verdana, sans-serif;
   --font-mono: "Recursive", Courier, monospace;
   --tracking-wide: 0.08em;
   --tracking-wider: 0.12em;
@@ -59,6 +61,7 @@
   /* Shape and motion */
   --border-radius: 0.375rem;
   --border-radius-l: 0.75rem;
+  --border-radius-xl: 1.5rem;
   --border-size-s: 1px;
   --border-size-m: 2px;
   --border-size-l: 3px;
@@ -72,6 +75,7 @@
   /* Layout */
   --measure: 60ch;
   --container: 80em;
+  --card-padding: clamp(1.25rem, 0.2rem + 4.4vw, 3.75rem); /* 20px on phones, 60px on wide screens */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,6 +87,8 @@
     --color-surface: #262626;
     --color-line: #6c7175;
     --color-focus-column: #ff245726;
+    --color-chrome: #2b2b2b;
+    --color-tray: #303030;
     --shadow-soft:
       0 1px 1px #00000033,
       0 2px 2px #00000033,
@@ -212,9 +218,10 @@ header.site-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: var(--container);
-  margin: 0 auto;
-  padding: var(--spacing-s) var(--spacing-range-s-m);
+  /* Full-width bar, with its contents lined up with the page container */
+  padding-block: var(--spacing-s);
+  padding-inline: max(var(--spacing-range-s-m), (100% - var(--container)) / 2 + var(--spacing-range-s-m));
+  background: var(--color-chrome);
 }
 
 a.site-header__logo {
@@ -243,10 +250,32 @@ main.view {
   outline: none;
 }
 
+body.editor main.view {
+  padding-bottom: var(--spacing-range-s-m);
+}
+
 p.view__loading,
 p.view__error {
   padding: var(--spacing-l) 0 var(--spacing-s);
   color: var(--color-knocked-back);
+}
+
+
+/* ——— Icons —————————————————————————————————————————————————————————————
+   Phosphor (Regular) symbols live in a sprite at the top of index.html. */
+
+svg.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+svg.icon {
+  flex-shrink: 0;
+  width: 1.15em;
+  height: 1.15em;
+  fill: currentColor;
 }
 
 
@@ -331,6 +360,7 @@ header.library__header {
 
 h1.library__title {
   --vf-wght: 800;
+  --vf-opsz: 32;
   font-size: var(--type-scale-step-4);
   line-height: 1.1;
 }
@@ -383,10 +413,13 @@ nav.song__nav {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-xs) var(--spacing-s);
-  padding: var(--spacing-xs) 0 var(--spacing-m);
+  padding-block: var(--spacing-l);
 }
 
 a.song__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
   color: var(--color-dark);
   font-size: var(--type-scale-step--1);
   text-decoration: none;
@@ -424,14 +457,28 @@ div.song__exports {
   margin-left: auto;
 }
 
+/* Everything about the song lives on one white card */
+div.song__card {
+  padding: var(--card-padding);
+  border-radius: var(--border-radius-xl);
+  background: var(--color-surface);
+}
+
 header.song__header {
   display: grid;
-  gap: var(--spacing-2xs);
-  padding-bottom: var(--spacing-m);
+  gap: var(--spacing-s);
+  padding-bottom: var(--spacing-l);
+}
+
+@media (min-width: 52em) {
+  header.song__header {
+    padding-bottom: calc(var(--spacing-2xl) + var(--spacing-s));
+  }
 }
 
 input.song__name {
   --vf-wght: 800;
+  --vf-opsz: 32;
   width: 100%;
   padding: 0;
   border: 0;
@@ -439,6 +486,7 @@ input.song__name {
   background: transparent;
   font-size: var(--type-scale-step-4);
   line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 input.song__name:hover {
@@ -450,51 +498,84 @@ input.song__name:focus {
   border-bottom-color: var(--color-action);
 }
 
-p.song__summary {
-  color: var(--color-knocked-back);
-  font-size: var(--type-scale-step--1);
+/* Date, guitar, tuning and notes, with the Edit button at the end of the row */
+div.song__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-s);
 }
 
-/* Notes stay visible (but brief) while the details panel is closed */
-p.song__notes-preview {
-  display: -webkit-box;
-  max-width: var(--measure);
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+dl.song__facts {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-s);
+  min-width: min(100%, 16rem);
+}
+
+div.song__fact {
+  display: grid;
+  gap: var(--spacing-3xs);
+  align-content: start;
+}
+
+div.song__fact dt {
+  --vf-wght: 500;
+  color: var(--color-knocked-back);
+  font-size: var(--type-scale-step--2);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+div.song__fact dd {
   font-size: var(--type-scale-step--1);
   line-height: 1.3;
-  white-space: pre-line;
 }
 
-/* No need for the preview while the full notes are showing */
-header.song__header:has(details.song__details[open]) p.song__notes-preview {
-  display: none;
+span.song__fact-strings {
+  display: block;
 }
 
-div.song__disclosures {
+div.song__fact dd.is-empty {
+  color: var(--color-knocked-back);
+}
+
+div.song__fact--notes {
+  grid-column: 1 / -1;
+}
+
+/* Wide screens: date, guitar and tuning on a 170px rhythm, notes taking the rest */
+@media (min-width: 52em) {
+  dl.song__facts {
+    grid-template-columns: repeat(3, 9.625rem) minmax(0, 1fr);
+  }
+
+  div.song__fact--notes {
+    grid-column: auto;
+    max-width: var(--measure);
+  }
+}
+
+/* The editable form that "Edit" reveals in place of the facts */
+section.song__details {
   display: grid;
-  gap: var(--spacing-2xs);
-  margin-top: var(--spacing-2xs);
+  gap: var(--spacing-s);
+  padding: var(--spacing-s);
+  border-radius: var(--border-radius-l);
+  background: var(--color-tray);
 }
 
-details.song__details summary,
+div.song__details-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 details.song__source summary {
   --vf-wght: 600;
   width: fit-content;
   cursor: pointer;
   font-size: var(--type-scale-step--1);
-}
-
-div.song__details-inner {
-  display: grid;
-  gap: var(--spacing-s);
-  margin-top: var(--spacing-xs);
-  padding: var(--spacing-s);
-  border-radius: var(--border-radius-l);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-soft);
 }
 
 div.song__settings {
@@ -584,10 +665,10 @@ div.toolbar {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-2xs) var(--spacing-s);
-  margin-bottom: var(--spacing-m);
-  padding: var(--spacing-2xs) 0;
-  border-bottom: var(--border-size-s) solid var(--color-subtle);
-  background: var(--color-plain);
+  margin-bottom: var(--spacing-range-s-m);
+  padding: var(--spacing-2xs) 0.625rem;
+  border-radius: var(--border-radius);
+  background: var(--color-tray);
 }
 
 div.toolbar__group {
@@ -598,14 +679,16 @@ div.toolbar__group {
 
 p.toolbar__hint {
   width: 100%;
+  padding-inline: var(--spacing-3xs);
   color: var(--color-knocked-back);
   font-size: var(--type-scale-step--2);
 }
 
 @media (min-width: 72em) {
   p.toolbar__hint {
+    flex: 1 1 12rem;
     width: auto;
-    margin-left: auto;
+    text-align: right;
   }
 }
 
@@ -767,6 +850,7 @@ form.settings__inner {
 h2.new-song__title,
 h2.settings__title {
   --vf-wght: 800;
+  --vf-opsz: 32;
   font-size: var(--type-scale-step-3);
   line-height: 1.1;
 }

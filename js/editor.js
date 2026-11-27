@@ -10,7 +10,7 @@ import {
   presetFor,
   setStringCount,
   lowestStringHasNotes,
-  songSummary
+  formatDate
 } from './tab.js';
 
 // Each save is a commit to GitHub, so wait for a pause in typing before saving.
@@ -97,15 +97,40 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
   const tuningSelect = $('#song-tuning');
   const notesInput = $('#song-notes');
 
-  const summaryEl = $('p.song__summary');
-  const notesPreview = $('p.song__notes-preview');
+  const facts = {
+    date: $('dd[data-fact="date"]'),
+    guitar: $('dd[data-fact="guitar"]'),
+    tuning: $('dd[data-fact="tuning"]'),
+    notes: $('dd[data-fact="notes"]')
+  };
 
-  // The line under the song name, so the details panel can stay closed most of the time.
+  // The read-only row of details under the song name, kept in step with every edit.
   function updateSummary() {
-    summaryEl.textContent = songSummary(song);
+    facts.date.textContent = formatDate(song.date);
+    facts.guitar.textContent = `${song.strings}-string`;
+    // Tuning name on one line, the strings (low to high) on the next; custom tunings have no name.
+    const preset = presetFor(song.strings, song.tuning);
+    const strings = Object.assign(document.createElement('span'), {
+      className: 'song__fact-strings',
+      textContent: [...song.tuning].reverse().join(' ')
+    });
+    facts.tuning.replaceChildren(...(preset ? [preset.name, strings] : [strings]));
     const notes = song.notes.trim();
-    notesPreview.textContent = notes;
-    notesPreview.hidden = !notes;
+    facts.notes.textContent = notes || '—';
+    facts.notes.classList.toggle('is-empty', !notes);
+  }
+
+  // “Edit” swaps the row of details for the form, in place; “Done” swaps it back.
+  const metaEl = $('div.song__meta');
+  const detailsEl = $('section.song__details');
+  const editButton = $('[data-action="edit-details"]');
+
+  function showDetails(open) {
+    metaEl.hidden = open;
+    detailsEl.hidden = !open;
+    editButton.setAttribute('aria-expanded', String(open));
+    if (open) dateInput.focus();
+    else editButton.focus();
   }
 
   nameInput.value = song.name;
@@ -513,6 +538,12 @@ export function renderEditor(root, song, { onDeleted, readOnly = false }) {
       renderSheet();
       changed();
       focusCell(focus);
+    },
+    'edit-details'() {
+      showDetails(true);
+    },
+    'done-details'() {
+      showDetails(false);
     },
     'export-txt'() {
       exportText(song);
